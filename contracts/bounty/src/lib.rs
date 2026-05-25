@@ -35,3 +35,6 @@ impl BountyContract {
         client.transfer(&env.current_contract_address(), &maintainer, &amount);
     }
 }
+
+#[cfg(test)]
+mod test;
