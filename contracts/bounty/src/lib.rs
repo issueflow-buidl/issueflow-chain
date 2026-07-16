@@ -29,6 +29,32 @@ impl BountyContract {
         env.storage().persistent().set(&key, &bounty);
     }
 
+    pub fn claim_bounty(
+        env: Env,
+        token: Address,
+        maintainer: Address,
+        contributor: Address,
+        issue_id: Symbol,
+    ) {
+        maintainer.require_auth();
+
+        let key = (symbol_short!("bounty"), issue_id);
+        let mut bounty: Map<Address, i128> = env
+            .storage()
+            .persistent()
+            .get(&key)
+            .unwrap_or(Map::new(&env));
+        let amount = bounty
+            .get(maintainer.clone())
+            .unwrap_or_else(|| panic!("No bounty exists for this issue and maintainer"));
+
+        let client = token::Client::new(&env, &token);
+        client.transfer(&env.current_contract_address(), &contributor, &amount);
+
+        bounty.remove(maintainer);
+        env.storage().persistent().set(&key, &bounty);
+    }
+
     pub fn cancel_bounty(env: Env, token: Address, maintainer: Address, amount: i128) {
         maintainer.require_auth();
         let client = token::Client::new(&env, &token);
